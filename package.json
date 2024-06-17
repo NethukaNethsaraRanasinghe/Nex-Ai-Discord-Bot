@@ -1,0 +1,15 @@
+{
+  "name": "discord-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "setup": "node setup.js"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "discord.js": "^13.0.0",
+    "dotenv": "^10.0.0"
+  }
+}
