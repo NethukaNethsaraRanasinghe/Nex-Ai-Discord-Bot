@@ -19,10 +19,14 @@ client.on('messageCreate', async (message) => {
   const command = args.shift().toLowerCase();
 
   if (command === 'help') {
-    message.channel.send('Available commands: !help, !joke');
+    message.channel.send('Available commands: !help, !joke, !talk');
   } else if (command === 'joke') {
     const joke = await getJoke();
     message.channel.send(joke);
+  } else if (command === 'talk') {
+    const userMessage = args.join(' ');
+    const aiResponse = generateAiResponse(userMessage);
+    message.channel.send(aiResponse);
   }
 });
 
@@ -36,10 +40,35 @@ async function getJoke() {
   }
 }
 
-// Load prompts and restricted words from environment variables
+function generateAiResponse(userMessage) {
+  // Basic keyword matching logic to generate responses
+  const responses = {
+    hello: 'Hi there! How can I help you today?',
+    how: 'I\'m just a bot, but I\'m doing great! How about you?',
+    help: 'Sure! What do you need help with?',
+    weather: 'I can\'t check the weather right now, but it\'s always a good idea to carry an umbrella just in case!',
+    food: 'I love talking about food! What\'s your favorite dish?',
+    time: 'I don\'t have a watch, but I can always make time for you!',
+    bot: 'Yes, I am a bot. How can I assist you today?'
+  };
+
+  const defaultResponse = 'That sounds interesting! Tell me more.';
+
+  // Convert user message to lowercase for matching
+  const lowerCaseMessage = userMessage.toLowerCase();
+
+  // Find a matching response or use the default response
+  for (const keyword in responses) {
+    if (lowerCaseMessage.includes(keyword)) {
+      return responses[keyword];
+    }
+  }
+
+  return defaultResponse;
+}
+
+// Load restricted words from environment variables
 const restrictedWords = process.env.RESTRICTED_WORDS.split(',');
-const gptModel = process.env.GPT_MODEL;
-const groqApiKey = process.env.GROQ_API_KEY;
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
@@ -52,32 +81,6 @@ client.on('messageCreate', async (message) => {
       return;
     }
   }
-
-  // Handle AI prompts
-  const promptPath = path.join(__dirname, 'prompt.txt');
-  if (fs.existsSync(promptPath)) {
-    const userPrompt = fs.readFileSync(promptPath, 'utf-8');
-    const aiResponse = await getAiResponse(userPrompt);
-    message.channel.send(aiResponse);
-  }
 });
-
-async function getAiResponse(prompt) {
-  try {
-    const response = await axios.post('https://api.groq.com/openai/v1/chat', {
-      model: gptModel,
-      prompt: prompt,
-    }, {
-      headers: {
-        'Authorization': `Bearer ${groqApiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    return response.data.choices[0].text.trim();
-  } catch (error) {
-    console.error('Error fetching AI response:', error.message);
-    return 'Sorry, I couldn\'t fetch a response from the AI at the moment.';
-  }
-}
 
 client.login(process.env.DISCORD_TOKEN);
