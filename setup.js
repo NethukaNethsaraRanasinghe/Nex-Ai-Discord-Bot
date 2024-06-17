@@ -30,7 +30,7 @@ const envPath = path.join(__dirname, '.env');
 if (!fs.existsSync(envPath)) {
   console.log('Creating .env file...');
   fs.writeFileSync(envPath, `DISCORD_TOKEN=your_discord_bot_token
-NAGA_API_KEY=your_naga_ai_api_key
+GROQ_API_KEY=your_groq_api_key
 GPT_MODEL=gpt-4
 RESTRICTED_WORDS=word1,word2,word3`);
   console.log('.env file created. Please update it with your actual credentials.');
