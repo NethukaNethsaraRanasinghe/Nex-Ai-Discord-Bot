@@ -39,7 +39,7 @@ async function getJoke() {
 // Load prompts and restricted words from environment variables
 const restrictedWords = process.env.RESTRICTED_WORDS.split(',');
 const gptModel = process.env.GPT_MODEL;
-const nagaApiKey = process.env.NAGA_API_KEY;
+const groqApiKey = process.env.GROQ_API_KEY;
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
@@ -64,18 +64,18 @@ client.on('messageCreate', async (message) => {
 
 async function getAiResponse(prompt) {
   try {
-    const response = await axios.post('https://api.naga.ai/v1/chat', {
+    const response = await axios.post('https://api.groq.com/openai/v1/chat', {
       model: gptModel,
       prompt: prompt,
     }, {
       headers: {
-        'Authorization': `Bearer ${nagaApiKey}`,
+        'Authorization': `Bearer ${groqApiKey}`,
         'Content-Type': 'application/json',
       },
     });
     return response.data.choices[0].text.trim();
   } catch (error) {
-    console.error('Error fetching AI response:', error);
+    console.error('Error fetching AI response:', error.message);
     return 'Sorry, I couldn\'t fetch a response from the AI at the moment.';
   }
 }
