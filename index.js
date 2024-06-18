@@ -22,6 +22,7 @@ const jobEarnings = {
 };
 
 const mutedUsers = new Set();
+const eightBallResponses = ["Yes", "I don't know", "Negative", "Don't", "Yahhh", "Hmm"];
 
 client.once('ready', () => {
   console.log('Bot is online!');
@@ -80,6 +81,9 @@ client.on('messageCreate', async (message) => {
     case 'untimeout':
       await handleUnTimeoutCommand(message, args);
       break;
+    case '8ball':
+      await handle8BallCommand(message, args);
+      break;
     default:
       await message.channel.send('Unknown command. Type !help for a list of available commands.');
   }
@@ -87,7 +91,7 @@ client.on('messageCreate', async (message) => {
 
 async function handleHelpCommand(message) {
   const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
-  const commands = isAdmin ? 'Available commands: !joke, !talk, !ping, !job, !work, !balance, !timeout, !untimeout' : 'Available commands: !help, !joke, !talk, !ping, !job, !work, !balance';
+  const commands = isAdmin ? 'Available commands: !joke, !talk, !ping, !job, !work, !balance, !timeout, !untimeout, !8ball' : 'Available commands: !help, !joke, !talk, !ping, !job, !work, !balance, !8ball';
   await message.channel.send(commands);
 }
 
@@ -114,7 +118,7 @@ async function handleTalkCommand(message, args) {
 
 async function handlePingCommand(message) {
   const ping = Date.now() - message.createdTimestamp;
-  await message.channel.send(`Pong! Bor ping is ${ping}ms.`);
+  await message.channel.send(`Pong! Bot ping is ${ping}ms.`);
 }
 
 async function handleJobCommand(message) {
@@ -167,14 +171,14 @@ async function handleUnTimeoutCommand(message, args) {
   await message.channel.send(`${userToUnTimeout.user.tag} has been un-timed out.`);
 }
 
-function getJobForUser(userId) {
-  // Simulate random job assignment for the user
-  return jobs[Math.floor(Math.random() * jobs.length)];
-}
+async function handle8BallCommand(message, args) {
+  if (args.length === 0) {
+    await message.channel.send('Please ask a question.');
+    return;
+  }
 
-function addToBalance(userId, amount) {
-  const currentBalance = economy.get(userId) || 0;
-  economy.set(userId, currentBalance + amount);
+  const response = eightBallResponses[Math.floor(Math.random() * eightBallResponses.length)];
+  await message.channel.send(`🎱 ${response}`);
 }
 
 async function generateAiResponse(userMessage) {
