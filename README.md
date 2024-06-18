@@ -11,6 +11,7 @@
 - [x] Ecomoney
 - [x] Moding bot (Kinda)
 - [x] Fun
+- [x] 8ball
 
 </details>
 
@@ -27,6 +28,7 @@
 - [x] !balance (Ecomoney balance)
 - [x] !timeout (Makes the user timeout wic makes the user not able to chat)
 - [x] !untimeout (UnTimeouts the user and makes his able to chat)
+- [x] !8ball (Ask a question then it will give you an awnser)
 
 </details>
 
