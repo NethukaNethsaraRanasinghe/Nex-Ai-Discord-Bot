@@ -32,6 +32,8 @@
 - [x] !createticket
 - [x] !lock (Locks the current channel which user types this in)
 - [x] !unlock (Unlocks the locked channel)
+- [x] !kick {user} {reason} (Kicks a user with a reason)
+- [x] !ban {user} {reason} (Bans a user with a reason)     
 
 </details>
 
