@@ -87,6 +87,15 @@ client.on('messageCreate', async (message) => {
     case 'ticketcreate':
       await handleTicketCreateCommand(message);
       break;
+    case 'purge':
+      await handlePurgeCommand(message, args);
+      break;
+    case 'lock':
+      await handleLockCommand(message);
+      break;
+    case 'unlock':
+      await handleUnlockCommand(message);
+      break;
     default:
       await message.channel.send('Unknown command. Type !help for a list of available commands.');
   }
@@ -101,6 +110,9 @@ async function handleHelpCommand(message, args) {
       .setDescription('Here are the available moderation commands:')
       .addField('!timeout', 'Timeout a user.')
       .addField('!untimeout', 'Remove timeout from a user.')
+      .addField('!purge', 'Delete a specified number of messages.')
+      .addField('!lock', 'Lock the current channel.')
+      .addField('!unlock', 'Unlock the current channel.')
       .setColor('#ff0000');
     await message.channel.send({ embeds: [embed] });
   } else if (args[0] === 'fun') {
@@ -224,17 +236,22 @@ async function handle8BallCommand(message, args) {
 async function handleTicketCreateCommand(message) {
   const ticketNumber = Math.floor(Math.random() * 10000);
   const channelName = `ticket-${ticketNumber}`;
-  
+  const guild = message.guild;
+
   try {
-    await message.guild.channels.create(channelName, {
+    const channel = await guild.channels.create(channelName, {
       type: 'GUILD_TEXT',
       permissionOverwrites: [
         {
-          id: message.guild.id,
+          id: guild.roles.everyone,
           deny: ['VIEW_CHANNEL']
         },
         {
           id: message.author.id,
+          allow: ['VIEW_CHANNEL', 'SEND_MESSAGES']
+        },
+        {
+          id: guild.roles.cache.find(role => role.name.toLowerCase() === 'admin').id,
           allow: ['VIEW_CHANNEL', 'SEND_MESSAGES']
         }
       ]
@@ -244,6 +261,54 @@ async function handleTicketCreateCommand(message) {
     console.error('Error creating ticket channel:', error);
     await message.channel.send('Sorry, I couldn\'t create the ticket channel at the moment.');
   }
+}
+
+async function handlePurgeCommand(message, args) {
+  const amount = parseInt(args[0]);
+  if (isNaN(amount) || amount < 1 || amount > 100) {
+    await message.channel.send('Please provide a number between 1 and 100.');
+    return;
+  }
+
+  try {
+    await message.channel.bulkDelete(amount, true);
+    await message.channel.send(`Deleted ${amount} messages.`).then(msg => {
+      setTimeout(() => msg.delete(), 5000);
+    });
+  } catch (error) {
+    console.error('Error deleting messages:', error);
+    await message.channel.send('Sorry, I couldn\'t delete the messages at the moment.');
+  }
+}
+
+async function handleLockCommand(message) {
+  try {
+    await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: false });
+    await message.channel.send('Channel locked.');
+  } catch (error) {
+    console.error('Error locking channel:', error);
+    await message.channel.send('Sorry, I couldn\'t lock the channel at the moment.');
+  }
+}
+
+async function handleUnlockCommand(message) {
+  try {
+    await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: true });
+    await message.channel.send('Channel unlocked.');
+  } catch (error) {
+    console.error('Error unlocking channel:', error);
+    await message.channel.send('Sorry, I couldn\'t unlock the channel at the moment.');
+  }
+}
+
+function getJobForUser(userId) {
+  // Simulate random job assignment for the user
+  return jobs[Math.floor(Math.random() * jobs.length)];
+}
+
+function addToBalance(userId, amount) {
+  const currentBalance = economy.get(userId) || 0;
+  economy.set(userId, currentBalance + amount);
 }
 
 async function generateAiResponse(userMessage) {
