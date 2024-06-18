@@ -9,6 +9,12 @@ const OPENAI_API_URL = 'https://heckerai.uk.to/v1/chat/completions';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const warnings = new Map();
+const examplePrompts = [
+  "Hello, how can I help you today?",
+  "What's on your mind?",
+  "Tell me something interesting.",
+  // Add more prompts as needed, up to 900 examples
+];
 
 client.once('ready', () => {
   console.log('Bot is online!');
@@ -58,7 +64,7 @@ client.on('messageCreate', async (message) => {
 });
 
 async function handleHelpCommand(message) {
-  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name === 'admin');
+  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
   const commands = isAdmin ? 'Available commands: !help, !joke, !talk, !ping, !warn, !kick' : 'Available commands: !help, !joke, !talk, !ping';
   await message.channel.send(commands);
 }
@@ -74,7 +80,7 @@ async function handleJokeCommand(message) {
 }
 
 async function handleTalkCommand(message, args) {
-  const userMessage = args.join(' ');
+  const userMessage = args.join(' ') || getRandomPrompt();
   try {
     const aiResponse = await generateAiResponse(userMessage);
     await message.channel.send(aiResponse);
@@ -90,7 +96,7 @@ async function handlePingCommand(message) {
 }
 
 async function handleKickCommand(message) {
-  if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name === 'admin')) {
+  if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin')) {
     await message.channel.send('You do not have permission to use this command.');
     return;
   }
@@ -116,7 +122,7 @@ async function handleKickCommand(message) {
 }
 
 async function handleWarnCommand(message) {
-  if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name === 'admin')) {
+  if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin')) {
     await message.channel.send('You do not have permission to use this command.');
     return;
   }
@@ -151,6 +157,10 @@ async function handleWarnCommand(message) {
   }
 }
 
+function getRandomPrompt() {
+  return examplePrompts[Math.floor(Math.random() * examplePrompts.length)];
+}
+
 async function generateAiResponse(userMessage) {
   try {
     const response = await axios.post(OPENAI_API_URL, {
@@ -161,7 +171,7 @@ async function generateAiResponse(userMessage) {
     }, {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer hkr-3s7ku5wfbye0a5nptyw897z58917iv`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
       },
     });
 
