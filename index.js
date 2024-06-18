@@ -96,6 +96,15 @@ client.on('messageCreate', async (message) => {
     case 'unlock':
       await handleUnlockCommand(message);
       break;
+    case 'kick':
+      await handleKickCommand(message, args);
+      break;
+    case 'ban':
+      await handleBanCommand(message, args);
+      break;
+    case 'user':
+      await handleUserCommand(message, args);
+      break;
     default:
       await message.channel.send('Unknown command. Type !help for a list of available commands.');
   }
@@ -113,6 +122,8 @@ async function handleHelpCommand(message, args) {
       .addField('!purge', 'Delete a specified number of messages.')
       .addField('!lock', 'Lock the current channel.')
       .addField('!unlock', 'Unlock the current channel.')
+      .addField('!kick', 'Kick a user with a reason.')
+      .addField('!ban', 'Ban a user with a reason.')
       .setColor('#ff0000');
     await message.channel.send({ embeds: [embed] });
   } else if (args[0] === 'fun') {
@@ -133,6 +144,7 @@ async function handleHelpCommand(message, args) {
       .addField('!job', 'Get a random job.')
       .addField('!work', 'Earn money from your job.')
       .addField('!balance', 'Check your balance.')
+      .addField('!user', 'Get information about a user.')
       .setColor('#0000ff');
     await message.channel.send({ embeds: [embed] });
   } else {
@@ -224,18 +236,18 @@ async function handleUnTimeoutCommand(message, args) {
 }
 
 async function handle8BallCommand(message, args) {
-  if (args.length === 0) {
+  const question = args.join(' ');
+  if (!question) {
     await message.channel.send('Please ask a question.');
     return;
   }
 
   const response = eightBallResponses[Math.floor(Math.random() * eightBallResponses.length)];
-  await message.channel.send(`🎱 ${response}`);
+  await message.channel.send(response);
 }
 
 async function handleTicketCreateCommand(message) {
-  const ticketNumber = Math.floor(Math.random() * 10000);
-  const channelName = `ticket-${ticketNumber}`;
+  const channelName = `ticket-${Math.floor(Math.random() * 10000)}`;
   const guild = message.guild;
 
   try {
@@ -248,10 +260,6 @@ async function handleTicketCreateCommand(message) {
         },
         {
           id: message.author.id,
-          allow: ['VIEW_CHANNEL', 'SEND_MESSAGES']
-        },
-        {
-          id: guild.roles.cache.find(role => role.name.toLowerCase() === 'admin').id,
           allow: ['VIEW_CHANNEL', 'SEND_MESSAGES']
         }
       ]
@@ -283,8 +291,8 @@ async function handlePurgeCommand(message, args) {
 
 async function handleLockCommand(message) {
   try {
-    await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: false });
-    await message.channel.send('Channel locked.');
+    await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: false, VIEW_CHANNEL: false });
+    await message.channel.send('Channel locked for everyone.');
   } catch (error) {
     console.error('Error locking channel:', error);
     await message.channel.send('Sorry, I couldn\'t lock the channel at the moment.');
@@ -293,12 +301,59 @@ async function handleLockCommand(message) {
 
 async function handleUnlockCommand(message) {
   try {
-    await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: true });
-    await message.channel.send('Channel unlocked.');
+    await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: true, VIEW_CHANNEL: true });
+    await message.channel.send('Channel unlocked for everyone.');
   } catch (error) {
     console.error('Error unlocking channel:', error);
     await message.channel.send('Sorry, I couldn\'t unlock the channel at the moment.');
   }
+}
+
+async function handleKickCommand(message, args) {
+  const userToKick = message.mentions.members.first();
+  const reason = args.slice(1).join(' ') || 'No reason provided';
+  if (!userToKick) {
+    await message.channel.send('Please mention a user to kick.');
+    return;
+  }
+
+  try {
+    await userToKick.kick(reason);
+    await message.channel.send(`${userToKick.user.tag} has been kicked. Reason: ${reason}`);
+  } catch (error) {
+    console.error('Error kicking user:', error);
+    await message.channel.send('Sorry, I couldn\'t kick the user at the moment.');
+  }
+}
+
+async function handleBanCommand(message, args) {
+  const userToBan = message.mentions.members.first();
+  const reason = args.slice(1).join(' ') || 'No reason provided';
+  if (!userToBan) {
+    await message.channel.send('Please mention a user to ban.');
+    return;
+  }
+
+  try {
+    await userToBan.ban({ reason });
+    await message.channel.send(`${userToBan.user.tag} has been banned. Reason: ${reason}`);
+  } catch (error) {
+    console.error('Error banning user:', error);
+    await message.channel.send('Sorry, I couldn\'t ban the user at the moment.');
+  }
+}
+
+async function handleUserCommand(message, args) {
+  const user = message.mentions.users.first() || message.author;
+
+  const embed = new MessageEmbed()
+    .setTitle(`${user.username}'s Information`)
+    .setThumbnail(user.displayAvatarURL())
+    .addField('Username', user.username)
+    .addField('ID', user.id)
+    .setColor('#00ff00');
+
+  await message.channel.send({ embeds: [embed] });
 }
 
 function getJobForUser(userId) {
