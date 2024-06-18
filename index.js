@@ -114,7 +114,7 @@ async function handleTalkCommand(message, args) {
 
 async function handlePingCommand(message) {
   const ping = Date.now() - message.createdTimestamp;
-  await message.channel.send(`Pong! Your ping is ${ping}ms.`);
+  await message.channel.send(`Pong! Bor ping is ${ping}ms.`);
 }
 
 async function handleJobCommand(message) {
