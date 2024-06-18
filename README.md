@@ -34,7 +34,9 @@
 - [x] !unlock (Unlocks the locked channel)
 - [x] !kick {user} {reason} (Kicks a user with a reason also in order this command to work it needs admin role)
 - [x] !ban {user} {reason} (Bans a user with a reason also in order this command to work it needs admin role)
-- [x] !purge {amount} (Deletes amount of messages)     
+- [x] !purge {amount} (Deletes amount of messages)
+- [x] !shop (For ecomoney)
+- [x] !translate {word} {languageyouwanttotranslateto}
 
 </details>
 
