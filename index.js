@@ -87,7 +87,7 @@ client.on('messageCreate', async (message) => {
 
 async function handleHelpCommand(message) {
   const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
-  const commands = isAdmin ? 'Available commands: !help, !joke, !talk, !ping, !job, !work, !balance, !timeout, !untimeout' : 'Available commands: !help, !joke, !talk, !ping, !job, !work, !balance';
+  const commands = isAdmin ? 'Available commands: !joke, !talk, !ping, !job, !work, !balance, !timeout, !untimeout' : 'Available commands: !help, !joke, !talk, !ping, !job, !work, !balance';
   await message.channel.send(commands);
 }
 
