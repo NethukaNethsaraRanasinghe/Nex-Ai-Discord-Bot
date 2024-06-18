@@ -34,8 +34,6 @@ GROQ_API_KEY=your_groq_api_key
 GPT_MODEL=gpt-4
 RESTRICTED_WORDS=word1,word2,word3`);
   console.log('.env file created. Please update it with your actual credentials.');
-} else {
-  console.log('.env file already exists. Skipping creation.');
 }
 
 // Create prompt.txt file if it doesn't exist
@@ -43,9 +41,6 @@ const promptPath = path.join(__dirname, 'prompt.txt');
 if (!fs.existsSync(promptPath)) {
   console.log('Creating prompt.txt file...');
   fs.writeFileSync(promptPath, 'This is the initial prompt text. Users can modify this file to change the bot\'s responses.');
-  console.log('prompt.txt file created.');
-} else {
-  console.log('prompt.txt file already exists. Skipping creation.');
 }
 
 console.log('Setup complete. You can start the bot with \'npm start\'.');
