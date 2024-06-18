@@ -1,4 +1,4 @@
-# Discord AI Chatbot 🤖
+# Nex Ai Discord Bot 🤖
 #### Your Discord AI Companion!
 
 ## Features and commands 🌟
