@@ -5,6 +5,10 @@ require('dotenv').config();
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 const PREFIX = '!';
 const restrictedWords = process.env.RESTRICTED_WORDS.split(',');
+const OPENAI_API_URL = 'https://heckerai.uk.to/v1/chat/completions';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+const messageHistory = new Map();
 
 client.once('ready', () => {
   console.log('Bot is online!');
@@ -40,28 +44,44 @@ client.on('messageCreate', async (message) => {
       break;
     case 'talk':
       const userMessage = args.join(' ');
-      message.channel.send(generateAiResponse(userMessage));
+      try {
+        const aiResponse = await generateAiResponse(message.channel.id, userMessage);
+        message.channel.send(aiResponse);
+      } catch (error) {
+        console.error('Error generating AI response:', error);
+        message.channel.send('Sorry, I couldn\'t generate a response at the moment.');
+      }
       break;
   }
 });
 
-function generateAiResponse(userMessage) {
-  const responses = {
-    hello: 'Hi there! How can I help you today?',
-    how: 'I\'m just a bot, but I\'m doing great! How about you?',
-    help: 'Sure! What do you need help with?',
-    weather: 'I can\'t check the weather right now, but it\'s always a good idea to carry an umbrella just in case!',
-    food: 'I love talking about food! What\'s your favorite dish?',
-    time: 'I don\'t have a watch, but I can always make time for you!',
-    bot: 'Yes, I am a bot. How can I assist you today?'
-  };
+async function generateAiResponse(channelId, userMessage) {
+  if (!messageHistory.has(channelId)) {
+    messageHistory.set(channelId, []);
+  }
 
-  const defaultResponse = 'That sounds interesting! Tell me more.';
-  const lowerCaseMessage = userMessage.toLowerCase();
+  const history = messageHistory.get(channelId);
+  history.push({ role: 'user', content: userMessage });
 
-  return Object.keys(responses).find(keyword => lowerCaseMessage.includes(keyword))
-    ? responses[keyword]
-    : defaultResponse;
+  try {
+    const response = await axios.post(OPENAI_API_URL, {
+      messages: history,
+      max_tokens: 100,
+      temperature: 0.7
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+    });
+
+    const aiResponse = response.data.choices[0].message.content.trim();
+    history.push({ role: 'assistant', content: aiResponse });
+
+    return aiResponse;
+  } catch (error) {
+    throw new Error('Error generating AI response');
+  }
 }
 
 client.login(process.env.DISCORD_TOKEN);
