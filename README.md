@@ -1,5 +1,4 @@
-# Nex Ai Discord Bot 🤖
-#### Your Discord AI Companion!
+# Nex Ai Discord Bot V1 🤖
 
 ## Features and commands 🌟
 
@@ -12,6 +11,7 @@
 - [x] Moding bot (Kinda)
 - [x] Fun
 - [x] 8ball
+- [x] Much more advanced and lot of commands
 
 </details>
 
@@ -21,7 +21,7 @@
 - [x] !help (Get all commands)
 - [x] !joke (Get a randomized joke)
 - [x] !warn (Warn a user)
-- [x] !ping (Sows your ping)
+- [x] !ping (Shows the bots ping)
 - [x] !talk (Talk with the Ai)
 - [x] !job (Ecomoney jobs)
 - [x] !work (Ecomoney work)
@@ -29,6 +29,9 @@
 - [x] !timeout (Makes the user timeout wic makes the user not able to chat)
 - [x] !untimeout (UnTimeouts the user and makes his able to chat)
 - [x] !8ball (Ask a question then it will give you an awnser)
+- [x] !createticket
+- [x] !lock (Locks the current channel which user types this in)
+- [x] !unlock (Unlocks the locked channel)
 
 </details>
 
