@@ -8,7 +8,6 @@ const restrictedWords = process.env.RESTRICTED_WORDS.split(',');
 const OPENAI_API_URL = 'https://heckerai.uk.to/v1/chat/completions';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-const messageHistory = new Map();
 const warnings = new Map();
 
 client.once('ready', () => {
@@ -20,8 +19,12 @@ client.on('messageCreate', async (message) => {
 
   // Check for restricted words
   if (restrictedWords.some(word => message.content.includes(word))) {
-    message.delete();
-    message.channel.send('Your message contained a restricted word and was deleted.');
+    if (message.deletable) {
+      await message.delete();
+      await message.channel.send('Your message contained a restricted word and was deleted.');
+    } else {
+      console.warn('Cannot delete message: insufficient permissions.');
+    }
     return;
   }
 
@@ -32,116 +35,139 @@ client.on('messageCreate', async (message) => {
 
   switch (command) {
     case 'help':
-      if (message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin')) {
-        message.channel.send('Available commands: !help, !joke, !talk, !ping, !warn, !kick');
-      } else {
-        message.channel.send('Available commands: !help, !joke, !talk, !ping');
-      }
+      await handleHelpCommand(message);
       break;
     case 'joke':
-      try {
-        const response = await axios.get('https://official-joke-api.appspot.com/random_joke');
-        message.channel.send(`${response.data.setup} - ${response.data.punchline}`);
-      } catch (error) {
-        console.error('Error fetching joke:', error);
-        message.channel.send('Sorry, I couldn\'t fetch a joke for you at the moment.');
-      }
+      await handleJokeCommand(message);
       break;
     case 'talk':
-      const userMessage = args.join(' ');
-      try {
-        const aiResponse = await generateAiResponse(message.channel.id, userMessage);
-        message.channel.send(aiResponse);
-      } catch (error) {
-        console.error('Error generating AI response:', error);
-        message.channel.send('Sorry, I couldn\'t generate a response at the moment.');
-      }
+      await handleTalkCommand(message, args);
       break;
     case 'ping':
-      const ping = Date.now() - message.createdTimestamp;
-      message.channel.send(`Pong! Your ping is ${ping}ms.`);
+      await handlePingCommand(message);
       break;
     case 'kick':
-      if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin')) {
-        message.channel.send('You do not have permission to use this command.');
-        return;
-      }
-      const userToKick = message.mentions.members.first();
-      if (!userToKick) {
-        message.channel.send('Please mention a user to kick.');
-        return;
-      }
-      if (!userToKick.kickable) {
-        message.channel.send('I cannot kick this user.');
-        return;
-      }
-      try {
-        await userToKick.kick();
-        message.channel.send(`${userToKick.user.tag} has been kicked.`);
-      } catch (error) {
-        console.error('Error kicking user:', error);
-        message.channel.send('Sorry, I couldn\'t kick the user.');
-      }
+      await handleKickCommand(message);
       break;
     case 'warn':
-      if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin')) {
-        message.channel.send('You do not have permission to use this command.');
-        return;
-      }
-      const userToWarn = message.mentions.members.first();
-      if (!userToWarn) {
-        message.channel.send('Please mention a user to warn.');
-        return;
-      }
-      if (!warnings.has(userToWarn.id)) {
-        warnings.set(userToWarn.id, 0);
-      }
-      warnings.set(userToWarn.id, warnings.get(userToWarn.id) + 1);
-      try {
-        await userToWarn.send('You have been warned.');
-      } catch (error) {
-        console.error('Error sending warning DM:', error);
-        message.channel.send('Sorry, I couldn\'t warn the user.');
-      }
-      message.channel.send(`${userToWarn.user.tag} has been warned. They have ${warnings.get(userToWarn.id)} warnings.`);
-      if (warnings.get(userToWarn.id) >= 3) {
-        try {
-          await userToWarn.kick();
-          message.channel.send(`${userToWarn.user.tag} has been kicked for receiving 3 warnings.`);
-        } catch (error) {
-          console.error('Error auto-kicking user:', error);
-          message.channel.send('Sorry, I couldn\'t kick the user after 3 warnings.');
-        }
-      }
+      await handleWarnCommand(message);
       break;
+    default:
+      await message.channel.send('Unknown command. Type !help for a list of available commands.');
   }
 });
 
-async function generateAiResponse(channelId, userMessage) {
-  if (!messageHistory.has(channelId)) {
-    messageHistory.set(channelId, []);
+async function handleHelpCommand(message) {
+  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name === 'admin');
+  const commands = isAdmin ? 'Available commands: !help, !joke, !talk, !ping, !warn, !kick' : 'Available commands: !help, !joke, !talk, !ping';
+  await message.channel.send(commands);
+}
+
+async function handleJokeCommand(message) {
+  try {
+    const response = await axios.get('https://official-joke-api.appspot.com/random_joke');
+    await message.channel.send(`${response.data.setup} - ${response.data.punchline}`);
+  } catch (error) {
+    console.error('Error fetching joke:', error);
+    await message.channel.send('Sorry, I couldn\'t fetch a joke for you at the moment.');
+  }
+}
+
+async function handleTalkCommand(message, args) {
+  const userMessage = args.join(' ');
+  try {
+    const aiResponse = await generateAiResponse(userMessage);
+    await message.channel.send(aiResponse);
+  } catch (error) {
+    console.error('Error generating AI response:', error);
+    await message.channel.send('Sorry, I couldn\'t generate a response at the moment.');
+  }
+}
+
+async function handlePingCommand(message) {
+  const ping = Date.now() - message.createdTimestamp;
+  await message.channel.send(`Pong! Your ping is ${ping}ms.`);
+}
+
+async function handleKickCommand(message) {
+  if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name === 'admin')) {
+    await message.channel.send('You do not have permission to use this command.');
+    return;
   }
 
-  const history = messageHistory.get(channelId);
-  history.push({ role: 'user', content: userMessage });
+  const userToKick = message.mentions.members.first();
+  if (!userToKick) {
+    await message.channel.send('Please mention a user to kick.');
+    return;
+  }
+
+  if (!userToKick.kickable) {
+    await message.channel.send('I cannot kick this user.');
+    return;
+  }
 
   try {
+    await userToKick.kick();
+    await message.channel.send(`${userToKick.user.tag} has been kicked.`);
+  } catch (error) {
+    console.error('Error kicking user:', error);
+    await message.channel.send('Sorry, I couldn\'t kick the user.');
+  }
+}
+
+async function handleWarnCommand(message) {
+  if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name === 'admin')) {
+    await message.channel.send('You do not have permission to use this command.');
+    return;
+  }
+
+  const userToWarn = message.mentions.members.first();
+  if (!userToWarn) {
+    await message.channel.send('Please mention a user to warn.');
+    return;
+  }
+
+  if (!warnings.has(userToWarn.id)) {
+    warnings.set(userToWarn.id, 0);
+  }
+
+  warnings.set(userToWarn.id, warnings.get(userToWarn.id) + 1);
+  try {
+    await userToWarn.send('You have been warned.');
+  } catch (error) {
+    console.error('Error sending warning DM:', error);
+    await message.channel.send('Sorry, I couldn\'t warn the user.');
+  }
+
+  await message.channel.send(`${userToWarn.user.tag} has been warned. They have ${warnings.get(userToWarn.id)} warnings.`);
+  if (warnings.get(userToWarn.id) >= 3) {
+    try {
+      await userToWarn.kick();
+      await message.channel.send(`${userToWarn.user.tag} has been kicked for receiving 3 warnings.`);
+    } catch (error) {
+      console.error('Error auto-kicking user:', error);
+      await message.channel.send('Sorry, I couldn\'t kick the user after 3 warnings.');
+    }
+  }
+}
+
+async function generateAiResponse(userMessage) {
+  try {
     const response = await axios.post(OPENAI_API_URL, {
-      messages: history,
+      model: "gpt-4-turbo",
+      messages: [{ role: 'user', content: userMessage }],
       max_tokens: 100,
       temperature: 0.7
     }, {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer hkr-3s7ku5wfbye0a5nptyw897z58917iv`,
       },
     });
 
-    const aiResponse = response.data.choices[0].message.content.trim();
-    history.push({ role: 'assistant', content: aiResponse });
-
-    return aiResponse;
+    return response.data.choices[0].message.content.trim();
   } catch (error) {
+    console.error('Error generating AI response:', error);
     throw new Error('Error generating AI response');
   }
 }
