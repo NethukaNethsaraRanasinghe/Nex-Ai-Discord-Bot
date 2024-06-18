@@ -8,13 +8,20 @@ const restrictedWords = process.env.RESTRICTED_WORDS.split(',');
 const OPENAI_API_URL = 'https://heckerai.uk.to/v1/chat/completions';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-const warnings = new Map();
-const examplePrompts = [
-  "Hello, how can I help you today?",
-  "What's on your mind?",
-  "Tell me something interesting.",
-  // Add more prompts as needed, up to 900 examples
-];
+const economy = new Map();
+const jobs = ['Developer', 'Designer', 'Teacher', 'Doctor', 'Chef', 'Artist', 'Engineer', 'Writer'];
+const jobEarnings = {
+  'Developer': 100,
+  'Designer': 80,
+  'Teacher': 70,
+  'Doctor': 150,
+  'Chef': 60,
+  'Artist': 50,
+  'Engineer': 90,
+  'Writer': 75
+};
+
+const mutedUsers = new Set();
 
 client.once('ready', () => {
   console.log('Bot is online!');
@@ -22,6 +29,12 @@ client.once('ready', () => {
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
+
+  // Check for muted users and delete their messages
+  if (mutedUsers.has(message.author.id)) {
+    await message.delete();
+    return;
+  }
 
   // Check for restricted words
   if (restrictedWords.some(word => message.content.includes(word))) {
@@ -52,11 +65,20 @@ client.on('messageCreate', async (message) => {
     case 'ping':
       await handlePingCommand(message);
       break;
-    case 'kick':
-      await handleKickCommand(message);
+    case 'job':
+      await handleJobCommand(message);
       break;
-    case 'warn':
-      await handleWarnCommand(message);
+    case 'work':
+      await handleWorkCommand(message);
+      break;
+    case 'balance':
+      await handleBalanceCommand(message);
+      break;
+    case 'timeout':
+      await handleTimeoutCommand(message, args);
+      break;
+    case 'untimeout':
+      await handleUnTimeoutCommand(message, args);
       break;
     default:
       await message.channel.send('Unknown command. Type !help for a list of available commands.');
@@ -65,7 +87,7 @@ client.on('messageCreate', async (message) => {
 
 async function handleHelpCommand(message) {
   const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
-  const commands = isAdmin ? 'Available commands: !help, !joke, !talk, !ping, !warn, !kick' : 'Available commands: !help, !joke, !talk, !ping';
+  const commands = isAdmin ? 'Available commands: !help, !joke, !talk, !ping, !job, !work, !balance, !timeout, !untimeout' : 'Available commands: !help, !joke, !talk, !ping, !job, !work, !balance';
   await message.channel.send(commands);
 }
 
@@ -95,70 +117,64 @@ async function handlePingCommand(message) {
   await message.channel.send(`Pong! Your ping is ${ping}ms.`);
 }
 
-async function handleKickCommand(message) {
-  if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin')) {
-    await message.channel.send('You do not have permission to use this command.');
-    return;
-  }
-
-  const userToKick = message.mentions.members.first();
-  if (!userToKick) {
-    await message.channel.send('Please mention a user to kick.');
-    return;
-  }
-
-  if (!userToKick.kickable) {
-    await message.channel.send('I cannot kick this user.');
-    return;
-  }
-
-  try {
-    await userToKick.kick();
-    await message.channel.send(`${userToKick.user.tag} has been kicked.`);
-  } catch (error) {
-    console.error('Error kicking user:', error);
-    await message.channel.send('Sorry, I couldn\'t kick the user.');
-  }
+async function handleJobCommand(message) {
+  const randomJob = jobs[Math.floor(Math.random() * jobs.length)];
+  const userId = message.author.id;
+  economy.set(userId, { job: randomJob, balance: economy.get(userId)?.balance || 0 });
+  await message.channel.send(`Your job is: ${randomJob}. Type !work to earn money.`);
 }
 
-async function handleWarnCommand(message) {
-  if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin')) {
-    await message.channel.send('You do not have permission to use this command.');
+async function handleWorkCommand(message) {
+  const userId = message.author.id;
+  const userData = economy.get(userId);
+  if (!userData || !userData.job) {
+    await message.channel.send('You need to get a job first using !job.');
     return;
   }
 
-  const userToWarn = message.mentions.members.first();
-  if (!userToWarn) {
-    await message.channel.send('Please mention a user to warn.');
-    return;
-  }
-
-  if (!warnings.has(userToWarn.id)) {
-    warnings.set(userToWarn.id, 0);
-  }
-
-  warnings.set(userToWarn.id, warnings.get(userToWarn.id) + 1);
-  try {
-    await userToWarn.send('You have been warned.');
-  } catch (error) {
-    console.error('Error sending warning DM:', error);
-    await message.channel.send('Sorry, I couldn\'t warn the user.');
-  }
-
-  await message.channel.send(`${userToWarn.user.tag} has been warned. They have ${warnings.get(userToWarn.id)} warnings.`);
-  if (warnings.get(userToWarn.id) >= 3) {
-    try {
-      await userToWarn.kick();
-      await message.channel.send(`${userToWarn.user.tag} has been kicked for receiving 3 warnings.`);
-    } catch (error) {
-      console.error('Error auto-kicking user:', error);
-      await message.channel.send('Sorry, I couldn\'t kick the user after 3 warnings.');
-    }
-  }
+  const earnings = jobEarnings[userData.job];
+  userData.balance += earnings;
+  economy.set(userId, userData);
+  await message.channel.send(`You earned ${earnings} ecomoney from your job as a ${userData.job}.`);
 }
 
-function getRandomPrompt() {
-  return examplePrompts[Math.floor(Math.random() * examplePrompts.length)];
+async function handleBalanceCommand(message) {
+  const userId = message.author.id;
+  const balance = economy.get(userId)?.balance || 0;
+  await message.channel.send(`Your balance is: ${balance} ecomoney.`);
+}
+
+async function handleTimeoutCommand(message, args) {
+  const userToTimeout = message.mentions.members.first();
+  if (!userToTimeout) {
+    await message.channel.send('Please mention a user to timeout.');
+    return;
+  }
+
+  mutedUsers.add(userToTimeout.id);
+  await message.delete();
+  await message.channel.send(`${userToTimeout.user.tag} has been timed out.`);
+}
+
+async function handleUnTimeoutCommand(message, args) {
+  const userToUnTimeout = message.mentions.members.first();
+  if (!userToUnTimeout) {
+    await message.channel.send('Please mention a user to untimeout.');
+    return;
+  }
+
+  mutedUsers.delete(userToUnTimeout.id);
+  await message.channel.send(`${userToUnTimeout.user.tag} has been un-timed out.`);
+}
+
+function getJobForUser(userId) {
+  // Simulate random job assignment for the user
+  return jobs[Math.floor(Math.random() * jobs.length)];
+}
+
+function addToBalance(userId, amount) {
+  const currentBalance = economy.get(userId) || 0;
+  economy.set(userId, currentBalance + amount);
 }
 
 async function generateAiResponse(userMessage) {
