@@ -1,4 +1,4 @@
-const { Client, Intents } = require('discord.js');
+const { Client, Intents, MessageEmbed } = require('discord.js');
 const axios = require('axios');
 require('dotenv').config();
 
@@ -55,7 +55,7 @@ client.on('messageCreate', async (message) => {
 
   switch (command) {
     case 'help':
-      await handleHelpCommand(message);
+      await handleHelpCommand(message, args);
       break;
     case 'joke':
       await handleJokeCommand(message);
@@ -84,15 +84,55 @@ client.on('messageCreate', async (message) => {
     case '8ball':
       await handle8BallCommand(message, args);
       break;
+    case 'ticketcreate':
+      await handleTicketCreateCommand(message);
+      break;
     default:
       await message.channel.send('Unknown command. Type !help for a list of available commands.');
   }
 });
 
-async function handleHelpCommand(message) {
+async function handleHelpCommand(message, args) {
   const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
-  const commands = isAdmin ? 'Available commands: !joke, !talk, !ping, !job, !work, !balance, !timeout, !untimeout, !8ball' : 'Available commands: !help, !joke, !talk, !ping, !job, !work, !balance, !8ball';
-  await message.channel.send(commands);
+
+  if (args[0] === 'moderation') {
+    const embed = new MessageEmbed()
+      .setTitle('Moderation Commands')
+      .setDescription('Here are the available moderation commands:')
+      .addField('!timeout', 'Timeout a user.')
+      .addField('!untimeout', 'Remove timeout from a user.')
+      .setColor('#ff0000');
+    await message.channel.send({ embeds: [embed] });
+  } else if (args[0] === 'fun') {
+    const embed = new MessageEmbed()
+      .setTitle('Fun Commands')
+      .setDescription('Here are the available fun commands:')
+      .addField('!joke', 'Tell a random joke.')
+      .addField('!8ball', 'Ask the magic 8 ball a question.')
+      .setColor('#00ff00');
+    await message.channel.send({ embeds: [embed] });
+  } else if (args[0] === 'information') {
+    const embed = new MessageEmbed()
+      .setTitle('Information Commands')
+      .setDescription('Here are the available information commands:')
+      .addField('!help', 'Show available commands.')
+      .addField('!talk', 'Chat with the bot.')
+      .addField('!ping', 'Check bot ping.')
+      .addField('!job', 'Get a random job.')
+      .addField('!work', 'Earn money from your job.')
+      .addField('!balance', 'Check your balance.')
+      .setColor('#0000ff');
+    await message.channel.send({ embeds: [embed] });
+  } else {
+    const embed = new MessageEmbed()
+      .setTitle('Available Commands')
+      .setDescription('Use !help <category> to see commands in that category.')
+      .addField('Moderation', 'Use !help moderation to see commands in this category.')
+      .addField('Fun', 'Use !help fun to see commands in this category.')
+      .addField('Information', 'Use !help information to see commands in this category.')
+      .setColor('#ffffff');
+    await message.channel.send({ embeds: [embed] });
+  }
 }
 
 async function handleJokeCommand(message) {
@@ -179,6 +219,31 @@ async function handle8BallCommand(message, args) {
 
   const response = eightBallResponses[Math.floor(Math.random() * eightBallResponses.length)];
   await message.channel.send(`🎱 ${response}`);
+}
+
+async function handleTicketCreateCommand(message) {
+  const ticketNumber = Math.floor(Math.random() * 10000);
+  const channelName = `ticket-${ticketNumber}`;
+  
+  try {
+    await message.guild.channels.create(channelName, {
+      type: 'GUILD_TEXT',
+      permissionOverwrites: [
+        {
+          id: message.guild.id,
+          deny: ['VIEW_CHANNEL']
+        },
+        {
+          id: message.author.id,
+          allow: ['VIEW_CHANNEL', 'SEND_MESSAGES']
+        }
+      ]
+    });
+    await message.channel.send(`Ticket created: ${channelName}`);
+  } catch (error) {
+    console.error('Error creating ticket channel:', error);
+    await message.channel.send('Sorry, I couldn\'t create the ticket channel at the moment.');
+  }
 }
 
 async function generateAiResponse(userMessage) {
