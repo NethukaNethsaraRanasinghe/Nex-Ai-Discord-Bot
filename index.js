@@ -213,6 +213,12 @@ async function handleBalanceCommand(message) {
 }
 
 async function handleTimeoutCommand(message, args) {
+  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
+  if (!isAdmin) {
+    await message.channel.send('You do not have permission to use this command.');
+    return;
+  }
+
   const userToTimeout = message.mentions.members.first();
   if (!userToTimeout) {
     await message.channel.send('Please mention a user to timeout.');
@@ -225,6 +231,12 @@ async function handleTimeoutCommand(message, args) {
 }
 
 async function handleUnTimeoutCommand(message, args) {
+  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
+  if (!isAdmin) {
+    await message.channel.send('You do not have permission to use this command.');
+    return;
+  }
+
   const userToUnTimeout = message.mentions.members.first();
   if (!userToUnTimeout) {
     await message.channel.send('Please mention a user to untimeout.');
@@ -272,6 +284,12 @@ async function handleTicketCreateCommand(message) {
 }
 
 async function handlePurgeCommand(message, args) {
+  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
+  if (!isAdmin) {
+    await message.channel.send('You do not have permission to use this command.');
+    return;
+  }
+
   const amount = parseInt(args[0]);
   if (isNaN(amount) || amount < 1 || amount > 100) {
     await message.channel.send('Please provide a number between 1 and 100.');
@@ -290,6 +308,12 @@ async function handlePurgeCommand(message, args) {
 }
 
 async function handleLockCommand(message) {
+  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
+  if (!isAdmin) {
+    await message.channel.send('You do not have permission to use this command.');
+    return;
+  }
+
   try {
     await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: false, VIEW_CHANNEL: false });
     await message.channel.send('Channel locked for everyone.');
@@ -300,6 +324,12 @@ async function handleLockCommand(message) {
 }
 
 async function handleUnlockCommand(message) {
+  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
+  if (!isAdmin) {
+    await message.channel.send('You do not have permission to use this command.');
+    return;
+  }
+
   try {
     await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: true, VIEW_CHANNEL: true });
     await message.channel.send('Channel unlocked for everyone.');
@@ -310,6 +340,12 @@ async function handleUnlockCommand(message) {
 }
 
 async function handleKickCommand(message, args) {
+  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
+  if (!isAdmin) {
+    await message.channel.send('You do not have permission to use this command.');
+    return;
+  }
+
   const userToKick = message.mentions.members.first();
   const reason = args.slice(1).join(' ') || 'No reason provided';
   if (!userToKick) {
@@ -327,6 +363,12 @@ async function handleKickCommand(message, args) {
 }
 
 async function handleBanCommand(message, args) {
+  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
+  if (!isAdmin) {
+    await message.channel.send('You do not have permission to use this command.');
+    return;
+  }
+
   const userToBan = message.mentions.members.first();
   const reason = args.slice(1).join(' ') || 'No reason provided';
   if (!userToBan) {
