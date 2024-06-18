@@ -5,7 +5,7 @@ require('dotenv').config();
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 const PREFIX = '!';
 const restrictedWords = process.env.RESTRICTED_WORDS.split(',');
-const OPENAI_API_URL = 'https://heckerai.uk.to/v1';
+const OPENAI_API_URL = 'https://heckerai.uk.to/v1/chat/completions';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const messageHistory = new Map();
