@@ -1,4 +1,4 @@
-# Nex Ai Discord Bot V1 🤖
+# Nex Ai Discord Bot V2 🤖
 
 ## Features and commands 🌟
 
@@ -33,7 +33,8 @@
 - [x] !lock (Locks the current channel which user types this in)
 - [x] !unlock (Unlocks the locked channel)
 - [x] !kick {user} {reason} (Kicks a user with a reason also in order this command to work it needs admin role)
-- [x] !ban {user} {reason} (Bans a user with a reason also in order this command to work it needs admin role)     
+- [x] !ban {user} {reason} (Bans a user with a reason also in order this command to work it needs admin role)
+- [x] !purge {amount} (Deletes amount of messages)     
 
 </details>
 
