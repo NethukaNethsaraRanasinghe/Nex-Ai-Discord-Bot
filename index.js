@@ -32,7 +32,7 @@ client.on('messageCreate', async (message) => {
 
   switch (command) {
     case 'help':
-      if (message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name === 'admin')) {
+      if (message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin')) {
         message.channel.send('Available commands: !help, !joke, !talk, !ping, !warn, !kick');
       } else {
         message.channel.send('Available commands: !help, !joke, !talk, !ping');
@@ -62,7 +62,7 @@ client.on('messageCreate', async (message) => {
       message.channel.send(`Pong! Your ping is ${ping}ms.`);
       break;
     case 'kick':
-      if (!message.member.permissions.has('KICK_MEMBERS') || !message.member.roles.cache.some(role => role.name === 'admin')) {
+      if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin')) {
         message.channel.send('You do not have permission to use this command.');
         return;
       }
@@ -84,7 +84,7 @@ client.on('messageCreate', async (message) => {
       }
       break;
     case 'warn':
-      if (!message.member.permissions.has('KICK_MEMBERS') || !message.member.roles.cache.some(role => role.name === 'admin')) {
+      if (!message.member.permissions.has('KICK_MEMBERS') && !message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin')) {
         message.channel.send('You do not have permission to use this command.');
         return;
       }
