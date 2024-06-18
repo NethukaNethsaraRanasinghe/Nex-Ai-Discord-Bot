@@ -31,7 +31,7 @@ client.on('messageCreate', async (message) => {
 
   switch (command) {
     case 'help':
-      message.channel.send('Available commands: !help, !joke, !talk');
+      message.channel.send('Available commands: !help, !joke, !talk, !ping');
       break;
     case 'joke':
       try {
@@ -51,6 +51,10 @@ client.on('messageCreate', async (message) => {
         console.error('Error generating AI response:', error);
         message.channel.send('Sorry, I couldn\'t generate a response at the moment.');
       }
+      break;
+    case 'ping':
+      const ping = Date.now() - message.createdTimestamp;
+      message.channel.send(`Pong! Your ping is ${ping}ms.`);
       break;
   }
 });
