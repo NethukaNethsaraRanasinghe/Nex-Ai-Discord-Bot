@@ -21,6 +21,13 @@ const jobEarnings = {
   'Writer': 75
 };
 
+const shopItems = [
+  { name: 'Money 2x', price: 200, multiplier: 2 },
+  { name: 'Money 3x', price: 500, multiplier: 3 },
+  { name: 'Money 4x', price: 2000, multiplier: 4 },
+];
+
+const userMultipliers = new Map();
 const mutedUsers = new Set();
 const eightBallResponses = ["Yes", "I don't know", "Negative", "Don't", "Yahhh", "Hmm"];
 
@@ -75,6 +82,9 @@ client.on('messageCreate', async (message) => {
     case 'balance':
       await handleBalanceCommand(message);
       break;
+    case 'shop':
+      await handleShopCommand(message, args);
+      break;
     case 'timeout':
       await handleTimeoutCommand(message, args);
       break;
@@ -104,6 +114,9 @@ client.on('messageCreate', async (message) => {
       break;
     case 'user':
       await handleUserCommand(message, args);
+      break;
+    case 'translate':
+      await handleTranslateCommand(message, args);
       break;
     default:
       await message.channel.send('Unknown command. Type !help for a list of available commands.');
@@ -145,6 +158,8 @@ async function handleHelpCommand(message, args) {
       .addField('!work', 'Earn money from your job.')
       .addField('!balance', 'Check your balance.')
       .addField('!user', 'Get information about a user.')
+      .addField('!shop', 'View and buy items from the shop.')
+      .addField('!translate', 'Translate a word to another language.')
       .setColor('#0000ff');
     await message.channel.send({ embeds: [embed] });
   } else {
@@ -201,9 +216,12 @@ async function handleWorkCommand(message) {
   }
 
   const earnings = jobEarnings[userData.job];
-  userData.balance += earnings;
+  const multiplier = userMultipliers.get(userId) || 1;
+  const totalEarnings = earnings * multiplier;
+
+  userData.balance += totalEarnings;
   economy.set(userId, userData);
-  await message.channel.send(`You earned ${earnings} ecomoney from your job as a ${userData.job}.`);
+  await message.channel.send(`You earned ${totalEarnings} ecomoney from your job as a ${userData.job}.`);
 }
 
 async function handleBalanceCommand(message) {
@@ -212,44 +230,71 @@ async function handleBalanceCommand(message) {
   await message.channel.send(`Your balance is: ${balance} ecomoney.`);
 }
 
-async function handleTimeoutCommand(message, args) {
-  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
-  if (!isAdmin) {
-    await message.channel.send('You do not have permission to use this command.');
-    return;
-  }
+async function handleShopCommand(message, args) {
+  const userId = message.author.id;
+  const embed = new MessageEmbed()
+    .setTitle('Shop')
+    .setDescription('Here are the items you can buy:')
+    .addField('Money 2x', 'Price: 200 ecomoney')
+    .addField('Money 3x', 'Price: 500 ecomoney')
+    .addField('Money 4x', 'Price: 2000 ecomoney')
+    .setColor('#00ff00');
+  await message.channel.send({ embeds: [embed] });
 
-  const userToTimeout = message.mentions.members.first();
-  if (!userToTimeout) {
+  if (args[0]) {
+    const itemName = args.join(' ').toLowerCase();
+    const item = shopItems.find(i => i.name.toLowerCase() === itemName);
+    if (item) {
+      const userBalance = economy.get(userId)?.balance || 0;
+      if (userBalance >= item.price) {
+        economy.get(userId).balance -= item.price;
+        userMultipliers.set(userId, item.multiplier);
+        await message.channel.send(`You have purchased ${item.name}. Your earnings multiplier is now ${item.multiplier}x.`);
+      } else {
+        await message.channel.send('You do not have enough ecomoney to purchase this item.');
+      }
+    } else {
+      await message.channel.send('Item not found in shop.');
+    }
+  }
+}
+
+async function handleTimeoutCommand(message, args) {
+  const userId = message.mentions.users.first()?.id;
+  if (!userId) {
     await message.channel.send('Please mention a user to timeout.');
     return;
   }
 
-  mutedUsers.add(userToTimeout.id);
-  await message.delete();
-  await message.channel.send(`${userToTimeout.user.tag} has been timed out.`);
-}
-
-async function handleUnTimeoutCommand(message, args) {
-  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
-  if (!isAdmin) {
-    await message.channel.send('You do not have permission to use this command.');
+  const user = message.guild.members.cache.get(userId);
+  if (!user) {
+    await message.channel.send('User not found.');
     return;
   }
 
-  const userToUnTimeout = message.mentions.members.first();
-  if (!userToUnTimeout) {
+  mutedUsers.add(userId);
+  await message.channel.send(`${user.user.tag} has been timed out.`);
+}
+
+async function handleUnTimeoutCommand(message, args) {
+  const userId = message.mentions.users.first()?.id;
+  if (!userId) {
     await message.channel.send('Please mention a user to untimeout.');
     return;
   }
 
-  mutedUsers.delete(userToUnTimeout.id);
-  await message.channel.send(`${userToUnTimeout.user.tag} has been un-timed out.`);
+  const user = message.guild.members.cache.get(userId);
+  if (!user) {
+    await message.channel.send('User not found.');
+    return;
+  }
+
+  mutedUsers.delete(userId);
+  await message.channel.send(`${user.user.tag} has been un-timed out.`);
 }
 
 async function handle8BallCommand(message, args) {
-  const question = args.join(' ');
-  if (!question) {
+  if (args.length === 0) {
     await message.channel.send('Please ask a question.');
     return;
   }
@@ -259,174 +304,169 @@ async function handle8BallCommand(message, args) {
 }
 
 async function handleTicketCreateCommand(message) {
-  const channelName = `ticket-${Math.floor(Math.random() * 10000)}`;
-  const guild = message.guild;
-
-  try {
-    const channel = await guild.channels.create(channelName, {
-      type: 'GUILD_TEXT',
-      permissionOverwrites: [
-        {
-          id: guild.roles.everyone,
-          deny: ['VIEW_CHANNEL']
-        },
-        {
-          id: message.author.id,
-          allow: ['VIEW_CHANNEL', 'SEND_MESSAGES']
-        }
-      ]
-    });
-    await message.channel.send(`Ticket created: ${channelName}`);
-  } catch (error) {
-    console.error('Error creating ticket channel:', error);
-    await message.channel.send('Sorry, I couldn\'t create the ticket channel at the moment.');
+  const ticketCategory = message.guild.channels.cache.find(c => c.name === 'tickets' && c.type === 'category');
+  if (!ticketCategory) {
+    await message.guild.channels.create('tickets', { type: 'category' });
   }
+
+  const ticketChannel = await message.guild.channels.create(`ticket-${message.author.username}`, {
+    type: 'text',
+    parent: ticketCategory.id,
+    permissionOverwrites: [
+      {
+        id: message.guild.roles.everyone,
+        deny: ['VIEW_CHANNEL'],
+      },
+      {
+        id: message.author.id,
+        allow: ['VIEW_CHANNEL'],
+      },
+    ],
+  });
+
+  await message.channel.send(`Ticket created: ${ticketChannel}`);
 }
 
 async function handlePurgeCommand(message, args) {
-  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
-  if (!isAdmin) {
+  if (!message.member.permissions.has('MANAGE_MESSAGES')) {
     await message.channel.send('You do not have permission to use this command.');
     return;
   }
 
-  const amount = parseInt(args[0]);
-  if (isNaN(amount) || amount < 1 || amount > 100) {
+  const deleteCount = parseInt(args[0], 10);
+  if (!deleteCount || deleteCount < 1 || deleteCount > 100) {
     await message.channel.send('Please provide a number between 1 and 100.');
     return;
   }
 
-  try {
-    await message.channel.bulkDelete(amount, true);
-    await message.channel.send(`Deleted ${amount} messages.`).then(msg => {
-      setTimeout(() => msg.delete(), 5000);
-    });
-  } catch (error) {
-    console.error('Error deleting messages:', error);
-    await message.channel.send('Sorry, I couldn\'t delete the messages at the moment.');
-  }
+  await message.channel.bulkDelete(deleteCount, true);
+  await message.channel.send(`${deleteCount} messages deleted.`);
 }
 
 async function handleLockCommand(message) {
-  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
-  if (!isAdmin) {
+  if (!message.member.permissions.has('MANAGE_CHANNELS')) {
     await message.channel.send('You do not have permission to use this command.');
     return;
   }
 
-  try {
-    await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: false, VIEW_CHANNEL: false });
-    await message.channel.send('Channel locked for everyone.');
-  } catch (error) {
-    console.error('Error locking channel:', error);
-    await message.channel.send('Sorry, I couldn\'t lock the channel at the moment.');
-  }
+  await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: false });
+  await message.channel.send('Channel locked.');
 }
 
 async function handleUnlockCommand(message) {
-  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
-  if (!isAdmin) {
+  if (!message.member.permissions.has('MANAGE_CHANNELS')) {
     await message.channel.send('You do not have permission to use this command.');
     return;
   }
 
-  try {
-    await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: true, VIEW_CHANNEL: true });
-    await message.channel.send('Channel unlocked for everyone.');
-  } catch (error) {
-    console.error('Error unlocking channel:', error);
-    await message.channel.send('Sorry, I couldn\'t unlock the channel at the moment.');
-  }
+  await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SEND_MESSAGES: true });
+  await message.channel.send('Channel unlocked.');
 }
 
 async function handleKickCommand(message, args) {
-  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
-  if (!isAdmin) {
+  if (!message.member.permissions.has('KICK_MEMBERS')) {
     await message.channel.send('You do not have permission to use this command.');
     return;
   }
 
-  const userToKick = message.mentions.members.first();
-  const reason = args.slice(1).join(' ') || 'No reason provided';
-  if (!userToKick) {
+  const userId = message.mentions.users.first()?.id;
+  if (!userId) {
     await message.channel.send('Please mention a user to kick.');
     return;
   }
 
-  try {
-    await userToKick.kick(reason);
-    await message.channel.send(`${userToKick.user.tag} has been kicked. Reason: ${reason}`);
-  } catch (error) {
-    console.error('Error kicking user:', error);
-    await message.channel.send('Sorry, I couldn\'t kick the user at the moment.');
+  const user = message.guild.members.cache.get(userId);
+  if (!user) {
+    await message.channel.send('User not found.');
+    return;
   }
+
+  const reason = args.slice(1).join(' ') || 'No reason provided';
+  await user.kick(reason);
+  await message.channel.send(`${user.user.tag} has been kicked. Reason: ${reason}`);
 }
 
 async function handleBanCommand(message, args) {
-  const isAdmin = message.member.permissions.has('KICK_MEMBERS') || message.member.roles.cache.some(role => role.name.toLowerCase() === 'admin');
-  if (!isAdmin) {
+  if (!message.member.permissions.has('BAN_MEMBERS')) {
     await message.channel.send('You do not have permission to use this command.');
     return;
   }
 
-  const userToBan = message.mentions.members.first();
-  const reason = args.slice(1).join(' ') || 'No reason provided';
-  if (!userToBan) {
+  const userId = message.mentions.users.first()?.id;
+  if (!userId) {
     await message.channel.send('Please mention a user to ban.');
     return;
   }
 
-  try {
-    await userToBan.ban({ reason });
-    await message.channel.send(`${userToBan.user.tag} has been banned. Reason: ${reason}`);
-  } catch (error) {
-    console.error('Error banning user:', error);
-    await message.channel.send('Sorry, I couldn\'t ban the user at the moment.');
+  const user = message.guild.members.cache.get(userId);
+  if (!user) {
+    await message.channel.send('User not found.');
+    return;
   }
+
+  const reason = args.slice(1).join(' ') || 'No reason provided';
+  await user.ban({ reason });
+  await message.channel.send(`${user.user.tag} has been banned. Reason: ${reason}`);
 }
 
 async function handleUserCommand(message, args) {
-  const user = message.mentions.users.first() || message.author;
+  const userId = args[0]?.replace(/<@!?(\d+)>/, '$1') || message.author.id;
+  const user = message.guild.members.cache.get(userId) || await message.guild.members.fetch(userId);
+  if (!user) {
+    await message.channel.send('User not found.');
+    return;
+  }
 
   const embed = new MessageEmbed()
-    .setTitle(`${user.username}'s Information`)
-    .setThumbnail(user.displayAvatarURL())
-    .addField('Username', user.username)
-    .addField('ID', user.id)
-    .setColor('#00ff00');
-
+    .setTitle(`${user.user.tag} (${user.user.id})`)
+    .setThumbnail(user.user.displayAvatarURL())
+    .addField('Joined Server', user.joinedAt.toDateString(), true)
+    .addField('Account Created', user.user.createdAt.toDateString(), true)
+    .setColor('#0000ff');
   await message.channel.send({ embeds: [embed] });
 }
 
-function getJobForUser(userId) {
-  // Simulate random job assignment for the user
-  return jobs[Math.floor(Math.random() * jobs.length)];
-}
+async function handleTranslateCommand(message, args) {
+  if (args.length < 2) {
+    await message.channel.send('Please provide the word to translate and the target language code (e.g., !translate hello es).');
+    return;
+  }
 
-function addToBalance(userId, amount) {
-  const currentBalance = economy.get(userId) || 0;
-  economy.set(userId, currentBalance + amount);
-}
-
-async function generateAiResponse(userMessage) {
+  const [word, targetLanguage] = args;
   try {
-    const response = await axios.post(OPENAI_API_URL, {
-      model: "gpt-4-turbo",
-      messages: [{ role: 'user', content: userMessage }],
-      max_tokens: 100,
-      temperature: 0.7
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-    });
-
-    return response.data.choices[0].message.content.trim();
+    const response = await axios.get(`https://api.mymemory.translated.net/get?q=${word}&langpair=en|${targetLanguage}`);
+    const translatedText = response.data.responseData.translatedText;
+    await message.channel.send(`Translation: ${translatedText}`);
   } catch (error) {
-    console.error('Error generating AI response:', error);
-    throw new Error('Error generating AI response');
+    console.error('Error translating word:', error);
+    await message.channel.send('Sorry, I couldn\'t translate the word at the moment.');
   }
 }
 
-client.login(process.env.DISCORD_TOKEN);
+function getRandomPrompt() {
+  const prompts = [
+    'Tell me something interesting.',
+    'What do you think about the weather today?',
+    'Can you share a fun fact?',
+  ];
+  return prompts[Math.floor(Math.random() * prompts.length)];
+}
+
+async function generateAiResponse(userMessage) {
+  const response = await axios.post(
+    OPENAI_API_URL,
+    {
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: userMessage }],
+      max_tokens: 100,
+      n: 1,
+      stop: null,
+      temperature: 0.5,
+    },
+    { headers: { Authorization: `Bearer ${OPENAI_API_KEY}` } }
+  );
+
+  return response.data.choices[0].message.content;
+}
+
+client.login(process.env.TOKEN);
