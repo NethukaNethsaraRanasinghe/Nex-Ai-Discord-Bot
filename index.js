@@ -10,7 +10,7 @@ const client = new Discord.Client({
   ]
 });
 
-const PREFIX = '!';
+const PREFIX = '~';
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
