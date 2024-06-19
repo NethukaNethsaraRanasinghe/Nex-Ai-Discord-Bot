@@ -29,26 +29,26 @@ client.on('messageCreate', async message => {
 
   else if (command === '8ball') {
     const responses = [
-      'It is certain.',
-      'It is decidedly so.',
-      'Without a doubt.',
-      'Yes - definitely.',
-      'You may rely on it.',
-      'As I see it, yes.',
-      'Most likely.',
-      'Outlook good.',
-      'Yes.',
-      'Signs point to yes.',
-      'Reply hazy, try again.',
-      'Ask again later.',
-      'Better not tell you now.',
-      'Cannot predict now.',
-      'Concentrate and ask again.',
-      'Don\'t count on it.',
-      'My reply is no.',
-      'My sources say no.',
-      'Outlook not so good.',
-      'Very doubtful.'
+      '🎱 It is certain.',
+      '🎱 It is decidedly so.',
+      '🎱 Without a doubt.',
+      '🎱 Yes - definitely.',
+      '🎱 You may rely on it.',
+      '🎱 As I see it, yes.',
+      '🎱 Most likely.',
+      '🎱 Outlook good.',
+      '🎱 Yes.',
+      '🎱 Signs point to yes.',
+      '🎱 Reply hazy, try again.',
+      '🎱 Ask again later.',
+      '🎱 Better not tell you now.',
+      '🎱 Cannot predict now.',
+      '🎱 Concentrate and ask again.',
+      '🎱 Don\'t count on it.',
+      '🎱 My reply is no.',
+      '🎱 My sources say no.',
+      '🎱 Outlook not so good.',
+      '🎱 Very doubtful.'
     ];
     const response = responses[Math.floor(Math.random() * responses.length)];
     message.reply(response);
@@ -83,22 +83,6 @@ client.on('messageCreate', async message => {
     message.channel.send({ embeds: [embed] });
   }
 
-  else if (command === 'serverinfo') {
-    const guild = message.guild;
-
-    const embed = new Discord.MessageEmbed()
-      .setColor('#0099ff')
-      .setTitle(`Server Info - ${guild.name}`)
-      .setThumbnail(guild.iconURL({ dynamic: true }))
-      .addFields(
-        { name: 'Owner', value: guild.owner.user.tag, inline: true },
-        { name: 'Members', value: guild.memberCount, inline: true },
-        { name: 'Region', value: guild.region.toUpperCase(), inline: true },
-        { name: 'Created At', value: guild.createdAt.toLocaleDateString('en-US'), inline: true },
-      );
-    
-    message.channel.send({ embeds: [embed] });
-  }
 
   else if (command === 'avatar') {
     const user = message.mentions.users.first() || message.author;
