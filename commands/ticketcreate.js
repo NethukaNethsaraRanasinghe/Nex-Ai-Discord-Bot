@@ -23,11 +23,25 @@ module.exports = {
           {
             id: message.author.id,
             allow: ['VIEW_CHANNEL', 'SEND_MESSAGES', 'ADD_REACTIONS']
+          },
+          // Add the user who executed the command to the ticket channel
+          {
+            id: message.author.id,
+            allow: ['VIEW_CHANNEL', 'SEND_MESSAGES', 'ADD_REACTIONS']
           }
         ]
       });
 
+      // Optionally, you can add a message informing the user about the created ticket channel
       message.reply(`Ticket created! ${ticketChannel}`);
+
+      // Automatically add the user to the ticket channel
+      ticketChannel.permissionOverwrites.edit(message.author.id, {
+        VIEW_CHANNEL: true,
+        SEND_MESSAGES: true,
+        ADD_REACTIONS: true
+      });
+
     } catch (error) {
       console.error('Error creating ticket:', error);
       message.reply('Failed to create a ticket. Please try again later.');
