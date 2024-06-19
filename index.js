@@ -552,4 +552,4 @@ async function handleClearWarnsCommand(message, args) {
   }
 }
 
-bot.login('YOUR_DISCORD_BOT_TOKEN');
+client.login(process.env.TOKEN);
