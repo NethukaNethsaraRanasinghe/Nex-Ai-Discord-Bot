@@ -1,4 +1,4 @@
-# Nex Ai Discord Bot V2 🤖 (This project is no longer gonna get new updates)
+# Nex Ai Discord Bot V3 🤖
 
 ## Features and commands 🌟
 
@@ -8,35 +8,18 @@
 - [x] Has a Ai (You need to get the api key from Hecker Api <Hecker Ai discord - https://discord.gg/PCUgRMjtNm>
 - [x] Lots of commands (More coming soon! :D)
 - [x] Ecomoney
-- [x] Moding bot (Kinda)
+- [x] Modding bot
 - [x] Fun
 - [x] 8ball
 - [x] Much more advanced and lot of commands
+- [x] Gets updates and never stops ever
 
 </details>
 
 <details>
 <summary><strong>Commands ⚙️⚙️ (Click to expand)</strong></summary>
 
-- [x] !help (Get all commands)
-- [x] !joke (Get a randomized joke)
-- [x] !warn (Warn a user)
-- [x] !ping (Shows the bots ping)
-- [x] !talk (Talk with the Ai)
-- [x] !job (Ecomoney jobs)
-- [x] !work (Ecomoney work)
-- [x] !balance (Ecomoney balance)
-- [x] !timeout (Makes the user timeout wic makes the user not able to chat)
-- [x] !untimeout (UnTimeouts the user and makes his able to chat)
-- [x] !8ball (Ask a question then it will give you an awnser)
-- [x] !createticket
-- [x] !lock (Locks the current channel which user types this in)
-- [x] !unlock (Unlocks the locked channel)
-- [x] !kick {user} {reason} (Kicks a user with a reason also in order this command to work it needs admin role)
-- [x] !ban {user} {reason} (Bans a user with a reason also in order this command to work it needs admin role)
-- [x] !purge {amount} (Deletes amount of messages)
-- [x] !shop (For ecomoney)
-- [x] !translate {word} {languageyouwanttotranslateto}
+Too many commands so just use !help
 
 </details>
 
