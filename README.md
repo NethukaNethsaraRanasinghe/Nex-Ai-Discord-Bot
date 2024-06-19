@@ -37,6 +37,10 @@
 - [x] !purge {amount} (Deletes amount of messages)
 - [x] !shop (For ecomoney)
 - [x] !translate {word} {languageyouwanttotranslateto}
+- [x] !musicplay {music}
+- [x] !musicstop (Stops a music)
+- [x] !musicresume (resume the music)
+- [x] !musicpause (Pause the music)
 
 </details>
 
