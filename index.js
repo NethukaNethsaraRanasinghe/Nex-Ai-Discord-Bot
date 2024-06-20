@@ -1,12 +1,12 @@
 require('dotenv').config();
 const fs = require('fs');
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
-const axios = require('axios');
+const { Client, Intents, Collection } = require('discord.js');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 client.commands = new Collection();
 
 const PREFIX = '!';
+
 const OPENAI_API_URL = 'https://heckerai.uk.to/v1/chat/completions';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const messageHistory = new Map();
