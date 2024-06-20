@@ -1,39 +1,37 @@
-const { Permissions } = require('discord.js');
+const Discord = require('discord.js');
 
 module.exports = {
-  name: 'unban',
-  description: 'Unbans a user from the server.',
-  async execute(message, args) {
-    // Check if the user has permission to unban members
-    if (!message.member.permissions.has(Permissions.FLAGS.BAN_MEMBERS)) {
-      return message.reply('You do not have permission to use this command.');
+    name: "unban",
+    description: "Unbans a member from the server",
+    async run(client, message, args) {
+        if (!message.member.hasPermission("BAN_MEMBERS")) return message.channel.send('You can\'t use that!');
+        if (!message.guild.me.hasPermission("BAN_MEMBERS")) return message.channel.send('I don\'t have the permissions.');
+
+        // Get the user ID to unban (you can use args[0] or any other method)
+        const userId = args[0];
+
+        // Fetch the banned users
+        const bannedUsers = await message.guild.bans.fetch();
+        const bannedUser = bannedUsers.get(userId);
+
+        if (!bannedUser) return message.channel.send('User not found or not banned.');
+
+        // Unban the user
+        message.guild.members.unban(userId, 'Unban reason here')
+            .then(() => {
+                const unbanEmbed = new Discord.MessageEmbed()
+                    .setTitle('Member Unbanned')
+                    .addField('User Unbanned', `<@${userId}>`)
+                    .addField('Unbanned by', message.author)
+                    .addField('Reason', 'Unban reason here')
+                    .setFooter('Time Unbanned', client.user.displayAvatarURL())
+                    .setTimestamp();
+
+                message.channel.send(unbanEmbed);
+            })
+            .catch(err => {
+                console.error(err);
+                message.channel.send('Something went wrong while unbanning the user.');
+            });
     }
-
-    // Check if a user ID was provided
-    const userId = args[0];
-    if (!userId) {
-      return message.reply('Please provide a user ID to unban.');
-    }
-
-    try {
-      // Fetch the banned users
-      const bans = await message.guild.bans.fetch();
-      const bannedUser = bans.find(ban => ban.user.id === userId);
-
-      // If the user is not banned, return a message
-      if (!bannedUser) {
-        return message.reply('User is not banned.');
-      }
-
-      // Attempt to unban the user
-      await message.guild.members.unban(bannedUser.user, 'Unbanned via command');
-
-      // Notify the user and log the action
-      message.reply(`User ${bannedUser.user.tag} has been unbanned.`);
-      console.log(`User ${bannedUser.user.tag} has been unbanned by ${message.author.tag}`);
-    } catch (error) {
-      console.error('Error unbanning user:', error);
-      message.reply('There was an error unbanning the user.');
-    }
-  },
 };
