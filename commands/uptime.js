@@ -1,18 +1,13 @@
-const { MessageEmbed } = require('discord.js');
-const moment = require('moment');
-
 module.exports = {
   name: 'uptime',
-  description: 'Shows how long the bot has been online.',
-  execute(message, args, client) {
-    const uptime = moment.duration(client.uptime).format('d[d] h[h] m[m] s[s]');
-    
-    const embed = new MessageEmbed()
-      .setColor('#0099ff')
-      .setTitle('Bot Uptime')
-      .setDescription(`I have been online for: **${uptime}**.`)
-      .setTimestamp();
+  description: 'Displays the bot\'s uptime',
+  execute(message, args) {
+    const uptime = process.uptime();
+    const days = Math.floor(uptime / 86400);
+    const hours = Math.floor((uptime % 86400) / 3600);
+    const minutes = Math.floor((uptime % 3600) / 60);
+    const seconds = Math.floor(uptime % 60);
 
-    message.channel.send(embed);
-  },
+    message.reply(`Uptime: ${days}d ${hours}h ${minutes}m ${seconds}s`);
+  }
 };
