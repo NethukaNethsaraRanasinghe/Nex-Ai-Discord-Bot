@@ -1,4 +1,4 @@
-# Nex Ai Discord Bot V3 🤖
+# Nex Ai Discord Bot V3 🤖 (Legacy Version)
 
 ## Features and commands 🌟
 
