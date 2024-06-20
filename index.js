@@ -2,11 +2,10 @@ require('dotenv').config();
 const fs = require('fs');
 const { Client, Intents, Collection } = require('discord.js');
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS] });
 client.commands = new Collection();
 
 const PREFIX = '!';
-
 const OPENAI_API_URL = 'https://heckerai.uk.to/v1/chat/completions';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const messageHistory = new Map();
@@ -42,6 +41,29 @@ client.on('messageCreate', async message => {
   } catch (error) {
     console.error(error);
     message.reply('There was an error trying to execute that command!');
+  }
+});
+
+client.on('guildMemberAdd', async member => {
+  try {
+    const rolesData = JSON.parse(fs.readFileSync('./autoroles.json', 'utf-8'));
+    console.log('Assigning roles to new member:', member.user.tag);
+
+    for (const roleId of rolesData.roles) {
+      try {
+        const role = await member.guild.roles.fetch(roleId);
+        if (role) {
+          await member.roles.add(role);
+          console.log(`Role ${role.name} added to ${member.user.tag}`);
+        } else {
+          console.warn(`Role ID ${roleId} not found`);
+        }
+      } catch (error) {
+        console.error(`Error adding role ${roleId} to member ${member.user.tag}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('Error reading autoroles.json:', error);
   }
 });
 
