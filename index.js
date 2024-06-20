@@ -9,6 +9,7 @@ const PREFIX = '!';
 const OPENAI_API_URL = 'https://heckerai.uk.to/v1/chat/completions';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const messageHistory = new Map();
+const rolesFilePath = './autoroles.json'; // Path to your autoroles.json file
 
 // Command handler - Load all commands from the 'commands' folder
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -22,8 +23,7 @@ client.once('ready', () => {
 });
 
 client.on('messageCreate', async message => {
-  if (message.author.bot) return;
-  if (!message.content.startsWith(PREFIX)) return;
+  if (message.author.bot || !message.content.startsWith(PREFIX)) return;
 
   const args = message.content.slice(PREFIX.length).trim().split(/ +/);
   const commandName = args.shift().toLowerCase();
@@ -46,9 +46,12 @@ client.on('messageCreate', async message => {
 
 client.on('guildMemberAdd', async member => {
   try {
-    const rolesData = JSON.parse(fs.readFileSync('./autoroles.json', 'utf-8'));
+    // Read autoroles.json file
+    const rolesData = JSON.parse(fs.readFileSync(rolesFilePath, 'utf-8'));
+
     console.log('Assigning roles to new member:', member.user.tag);
 
+    // Iterate through roles and assign them
     for (const roleId of rolesData.roles) {
       try {
         const role = await member.guild.roles.fetch(roleId);
