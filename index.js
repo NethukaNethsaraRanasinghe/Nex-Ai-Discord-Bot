@@ -9,7 +9,6 @@ const PREFIX = '!';
 const OPENAI_API_URL = 'https://heckerai.uk.to/v1/chat/completions';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const messageHistory = new Map();
-const rolesFilePath = './autoroles.json'; // Path to your autoroles.json file
 
 // Command handler - Load all commands from the 'commands' folder
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -41,32 +40,6 @@ client.on('messageCreate', async message => {
   } catch (error) {
     console.error(error);
     message.reply('There was an error trying to execute that command!');
-  }
-});
-
-client.on('guildMemberAdd', async member => {
-  try {
-    // Read autoroles.json file
-    const rolesData = JSON.parse(fs.readFileSync(rolesFilePath, 'utf-8'));
-
-    console.log('Assigning roles to new member:', member.user.tag);
-
-    // Iterate through roles and assign them
-    for (const roleId of rolesData.roles) {
-      try {
-        const role = await member.guild.roles.fetch(roleId);
-        if (role) {
-          await member.roles.add(role);
-          console.log(`Role ${role.name} added to ${member.user.tag}`);
-        } else {
-          console.warn(`Role ID ${roleId} not found`);
-        }
-      } catch (error) {
-        console.error(`Error adding role ${roleId} to member ${member.user.tag}:`, error);
-      }
-    }
-  } catch (error) {
-    console.error('Error reading autoroles.json:', error);
   }
 });
 
