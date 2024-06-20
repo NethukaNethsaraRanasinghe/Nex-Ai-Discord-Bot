@@ -31,6 +31,8 @@ module.exports = {
         { name: '!roll {SIDES}', value: 'Rolls a dice with the specified number of sides.' },
         { name: '!weather {CITY}', value: 'Fetches the weather information for the specified city.' },
         { name: '!quote', value: 'Fetches a random inspirational quote.' },
+        { name: '!autoroleadd {ROLE_ID}', value: 'Add a autorole when so it adds a role when a members joins.' },
+        { name: '!autoroleremove {ROLE_ID}', value: 'Removes the role from auto role.' },
       );
 
     message.channel.send({ embeds: [embed] });
