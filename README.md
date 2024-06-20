@@ -7,11 +7,11 @@
 
 - [x] Has a Ai (You need to get the api key from Hecker Api <Hecker Ai discord - https://discord.gg/PCUgRMjtNm>
 - [x] Lots of commands (More coming soon! :D)
-- [x] Ecomoney
+- [x] Ecomoney (Coming soon)
 - [x] Modding bot
 - [x] Fun
 - [x] 8ball
-- [x] Much more advanced and lot of commands
+- [x] Free
 - [x] Gets updates and never stops ever
 
 </details>
