@@ -1,37 +1,46 @@
-const Discord = require('discord.js');
+const { MessageEmbed } = require('discord.js');
+const fs = require("fs");
 
 module.exports = {
-    name: "unban",
-    description: "Unbans a member from the server",
-    async run(client, message, args) {
-        if (!message.member.hasPermission("BAN_MEMBERS")) return message.channel.send('You can\'t use that!');
-        if (!message.guild.me.hasPermission("BAN_MEMBERS")) return message.channel.send('I don\'t have the permissions.');
+    name: `unban`,
+    description: `Unbans given user ID or mentioned user.`,
+    async execute(bot, args, message) {
 
-        // Get the user ID to unban (you can use args[0] or any other method)
-        const userId = args[0];
+        if (!message.member.hasPermission(["BAN_MEMBERS"])) return message.channel.send("You do not have the required permissions to use the unban command.")
 
-        // Fetch the banned users
-        const bannedUsers = await message.guild.bans.fetch();
-        const bannedUser = bannedUsers.get(userId);
+        if (!args[0]) return message.channel.send("Provide me a valid USER ID.");
+        //This if() checks if we typed anything after "!unban"
 
-        if (!bannedUser) return message.channel.send('User not found or not banned.');
+        let bannedMember;
+        //This try...catch solves the problem with the await
+        try {
+            bannedMember = await bot.users.cache.fetch(args[0])
+        } catch (e) {
+            if (!bannedMember) return message.channel.send("That's not a valid USER ID.")
+        }
 
-        // Unban the user
-        message.guild.members.unban(userId, 'Unban reason here')
-            .then(() => {
-                const unbanEmbed = new Discord.MessageEmbed()
-                    .setTitle('Member Unbanned')
-                    .addField('User Unbanned', `<@${userId}>`)
-                    .addField('Unbanned by', message.author)
-                    .addField('Reason', 'Unban reason here')
-                    .setFooter('Time Unbanned', client.user.displayAvatarURL())
-                    .setTimestamp();
+        //Check if the user is not banned
+        try {
+            await message.guild.fetchBan(args[0])
+        } catch (e) {
+            message.channel.send('This user is not banned.');
+            return;
+        }
 
-                message.channel.send(unbanEmbed);
-            })
-            .catch(err => {
-                console.error(err);
-                message.channel.send('Something went wrong while unbanning the user.');
-            });
+        let reason = args.slice(1).join(" ")
+        if (!reason) reason = "No reason provided."
+
+        if (!message.guild.me.hasPermission(["BAN_MEMBERS"])) return message.channel.send("I am missing permissions to unban.")
+        message.delete()
+        try {
+            message.guild.members.unban(bannedMember, { reason: reason })
+            message.channel.send(`${bannedMember.tag} has been unbanned.`)
+            console.log(`AUDIT LOG: [UNBAN] ${message.author.tag} unbanned ${member.user.tag} from ${message.guild.name}.`);
+            var readmessagefile = fs.readFileSync('./logging/UnbanLog.txt', 'utf-8');
+            var writemessagefile = fs.writeFileSync('./logging/UnbanLog.txt', 'Type: [UNBAN] ' + 'Time ' + '(' + message.createdAt + ')' + ' | ' + member.user.tag + ' from ' + message.guild.name + ' | Moderator ' + message.author.tag + '\n' + readmessagefile)
+            console.log('BOT LOG: [INTERNAL] Writing to unban log file.');
+        } catch (e) {
+            console.log(e.message)
+        }
     }
-};
+}
