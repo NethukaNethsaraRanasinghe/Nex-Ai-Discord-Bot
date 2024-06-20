@@ -2,31 +2,31 @@ const fetch = require('node-fetch');
 
 module.exports = {
   name: 'translate',
-  description: 'Translates a word or phrase into the specified language.',
+  description: 'Translates text to the specified language',
   async execute(message, args) {
-    // Check if both word and language are provided
-    if (args.length < 2) {
-      return message.reply('Please provide a word/phrase and a language code to translate to.');
-    }
+    const targetLanguage = args.shift();
+    const textToTranslate = args.join(' ');
 
-    const word = args.slice(0, -1).join(' ');
-    const language = args[args.length - 1];
+    if (!targetLanguage || !textToTranslate) {
+      return message.reply('Usage: !translate <target_language> <text>');
+    }
 
     try {
-      // Fetch translation from translation API
-      const translationData = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=auto|${language}`);
-      const translationJson = await translationData.json();
+      const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${process.env.GOOGLE_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          q: textToTranslate,
+          target: targetLanguage
+        })
+      });
 
-      // Check if translation was successful
-      if (!translationJson.responseData || !translationJson.responseData.translatedText) {
-        throw new Error('Failed to translate. Please check your input and try again.');
-      }
-
-      // Send translated text back to the channel
-      message.channel.send(`**${word}** translated to **${language.toUpperCase()}**: ${translationJson.responseData.translatedText}`);
+      const data = await response.json();
+      const translatedText = data.data.translations[0].translatedText;
+      message.reply(translatedText);
     } catch (error) {
-      console.error('Error translating:', error);
-      message.reply('Failed to translate. Please try again later.');
+      console.error(error);
+      message.reply('There was an error trying to translate the text!');
     }
-  },
+  }
 };
