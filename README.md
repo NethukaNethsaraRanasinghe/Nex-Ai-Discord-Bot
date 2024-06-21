@@ -1,4 +1,4 @@
-# Nex Ai Discord Bot V1 (This project is no longer will update)
+# Nex Ai Discord Bot V2 (This project is no longer will update)
 
 ## Features and commands 🌟
 
