@@ -60,6 +60,7 @@
 - `daily`: Claim your daily coins.
 - `moneygive`: Give money to another user.
 
+will be in the next nex
 </details>
 
 ## Additional configuration ⚙️
